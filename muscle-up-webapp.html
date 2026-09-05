@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Muscle-up">
+<meta name="theme-color" content="#101B2D">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Muscle-up Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#101B2D; --bg-alt:#16243A; --bg-card:#1B2C46; --ink:#EDEFF2; --muted:#8CA0BC;
+    --accent:#F4B740; --accent-ink:#101B2D; --teal:#5FD6C0; --line:#28395A; --bad:#E27D60; --good:#6FCF97;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{-webkit-text-size-adjust:100%;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Sarabun',sans-serif;line-height:1.6;font-size:16px;
+    padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);padding-bottom:env(safe-area-inset-bottom);
+    overscroll-behavior-y:contain;}
+  .wrap{max-width:820px;margin:0 auto;padding:calc(40px + env(safe-area-inset-top)) 20px 96px;}
+  h1,h2,h3,.num-label{font-family:'Chakra Petch',sans-serif;}
+  h2{font-size:1.3rem;font-weight:600;margin:0 0 4px;border-bottom:1px solid var(--line);padding-bottom:10px;}
+  .section{margin:32px 0;}
+  .section-desc{color:var(--muted);font-size:0.92rem;margin:10px 0 18px;}
+
+  .hero{border:1px solid var(--line);border-radius:4px;padding:32px 28px;background:linear-gradient(160deg,var(--bg-alt) 0%, var(--bg-card) 100%);margin-bottom:20px;position:relative;overflow:hidden;}
+  .hero::before{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);background-size:28px 28px;opacity:0.12;pointer-events:none;}
+  .hero-eyebrow{color:var(--teal);font-weight:600;font-size:0.92rem;margin:0 0 6px;position:relative;}
+  .hero-num{font-size:clamp(2.6rem, 8vw, 4rem);font-weight:700;color:var(--accent);margin:0;line-height:1;position:relative;}
+  .hero-sub{font-size:1.05rem;margin:6px 0 4px;font-weight:600;position:relative;}
+  .hero-note{color:var(--muted);font-size:0.9rem;max-width:64ch;position:relative;}
+
+  .card{border:1px solid var(--line);border-radius:4px;background:var(--bg-alt);padding:20px;margin-bottom:16px;}
+
+  label{display:block;font-size:0.85rem;color:var(--muted);margin-bottom:5px;}
+  input[type="date"],input[type="number"],input[type="text"],textarea{
+    width:100%;background:var(--bg-card);border:1px solid var(--line);color:var(--ink);
+    padding:12px 12px;border-radius:6px;font-family:'Sarabun',sans-serif;font-size:16px;
+    min-height:44px;-webkit-appearance:none;appearance:none;
+  }
+  input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  textarea{resize:vertical;min-height:64px;}
+
+  .field-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:14px;}
+
+  .btn{background:var(--accent);color:var(--accent-ink);border:none;padding:12px 22px;border-radius:6px;
+    font-family:'Sarabun',sans-serif;font-weight:600;font-size:0.95rem;cursor:pointer;min-height:44px;touch-action:manipulation;}
+  .btn:active{filter:brightness(0.95);}
+  .btn:disabled{opacity:0.5;cursor:default;}
+  .btn.secondary{background:transparent;color:var(--teal);border:1px solid var(--teal);}
+  .btn.danger{background:transparent;color:var(--bad);border:1px solid var(--bad);padding:8px 14px;font-size:0.85rem;min-height:38px;}
+  .btn.small{padding:8px 14px;font-size:0.85rem;min-height:38px;}
+
+  .tabbar{display:flex;gap:4px;border:1px solid var(--line);border-radius:4px;padding:4px;background:var(--bg-alt);
+    margin-bottom:24px;position:sticky;top:calc(12px + env(safe-area-inset-top));z-index:10;flex-wrap:wrap;}
+  .tab-btn{flex:1;min-width:100px;background:transparent;border:none;color:var(--muted);padding:13px 10px;border-radius:4px;
+    font-family:'Sarabun',sans-serif;font-weight:600;font-size:0.86rem;cursor:pointer;text-align:center;min-height:44px;touch-action:manipulation;}
+  .tab-btn.active{background:var(--accent);color:var(--accent-ink);}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px;}
+  .stat-card{border:1px solid var(--line);border-radius:4px;background:var(--bg-alt);padding:16px 16px;}
+  .stat-card .stat-label{color:var(--muted);font-size:0.78rem;margin-bottom:6px;}
+  .stat-card .stat-value{font-family:'Chakra Petch',sans-serif;font-size:1.6rem;font-weight:700;color:var(--ink);line-height:1.1;}
+  .stat-card .stat-sub{font-size:0.78rem;color:var(--muted);margin-top:4px;}
+  .stat-card.accent .stat-value{color:var(--accent);}
+  .stat-card.teal .stat-value{color:var(--teal);}
+  .trend-up{color:var(--bad);} .trend-down{color:var(--good);}
+
+  .quick-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:26px;}
+
+  .day-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+  .day-head h3{margin:0;font-size:1.05rem;}
+  .save-status{color:var(--good);font-size:0.82rem;opacity:0;transition:opacity .3s;}
+  .save-status.show{opacity:1;}
+
+  .check-row{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px dashed var(--line);cursor:pointer;min-height:44px;}
+  .check-row:last-child{border-bottom:none;}
+  .ex-icon{width:32px;height:32px;flex-shrink:0;color:var(--teal);}
+  .ex-icon svg{width:100%;height:100%;}
+  input[type="checkbox"]{appearance:none;-webkit-appearance:none;width:24px;height:24px;min-width:24px;
+    border:1.5px solid var(--muted);border-radius:5px;cursor:pointer;position:relative;background:transparent;touch-action:manipulation;}
+  input[type="checkbox"]:checked{background:var(--accent);border-color:var(--accent);}
+  input[type="checkbox"]:checked::after{content:"";position:absolute;left:8px;top:4px;width:6px;height:11px;border:solid var(--accent-ink);border-width:0 2px 2px 0;transform:rotate(45deg);}
+  .check-label{font-size:0.96rem;}
+
+  .quest{background:var(--bg-card);border:1px solid var(--accent);border-radius:4px;padding:16px 18px;margin-bottom:18px;display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end;}
+  .quest-field{min-width:140px;}
+  .quest-field label{color:var(--accent);}
+
+  table{width:100%;border-collapse:collapse;font-size:0.9rem;}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  th{color:var(--teal);font-weight:600;font-family:'Chakra Petch',sans-serif;font-size:0.82rem;}
+  tr.current-month{background:rgba(244,183,64,0.08);}
+  tr.current-month td:first-child{color:var(--accent);font-weight:700;}
+
+  .history-list{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;}
+  .history-item{display:flex;align-items:center;gap:12px;padding:8px 10px;border:1px solid var(--line);border-radius:4px;cursor:pointer;background:var(--bg-card);}
+  .history-item:hover{border-color:var(--teal);}
+  .history-date{font-family:'Chakra Petch',sans-serif;font-size:0.85rem;min-width:88px;}
+  .bar-track{flex:1;height:8px;background:var(--line);border-radius:4px;overflow:hidden;}
+  .bar-fill{height:100%;background:var(--teal);}
+  .history-pct{font-size:0.8rem;color:var(--muted);min-width:38px;text-align:right;}
+  .empty-note{color:var(--muted);font-size:0.88rem;font-style:italic;}
+
+  .status-box{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
+  .status-pill{padding:5px 12px;border-radius:20px;font-size:0.82rem;border:1px solid var(--line);}
+  .status-pill.pass{color:var(--good);border-color:var(--good);}
+  .status-pill.fail{color:var(--bad);border-color:var(--bad);}
+
+  .perf-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);gap:10px;flex-wrap:wrap;}
+  .perf-row:last-child{border-bottom:none;}
+  .perf-meta{font-size:0.85rem;color:var(--muted);}
+  .perf-actions{display:flex;gap:8px;}
+
+  .protein-hero{display:flex;align-items:baseline;gap:12px;margin:8px 0 16px;flex-wrap:wrap;}
+  .protein-hero .num{font-family:'Chakra Petch',sans-serif;font-size:2.2rem;font-weight:700;color:var(--teal);}
+  .protein-hero .lbl{color:var(--muted);font-size:0.9rem;}
+
+  .food-totals{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0;}
+  .food-pill{background:var(--bg-card);border:1px solid var(--line);border-radius:6px;padding:10px 14px;min-width:90px;}
+  .food-pill .fp-label{font-size:0.75rem;color:var(--muted);}
+  .food-pill .fp-value{font-family:'Chakra Petch',sans-serif;font-size:1.15rem;font-weight:700;}
+  .food-pill.over .fp-value{color:var(--bad);}
+  .food-pill.ok .fp-value{color:var(--good);}
+
+  .food-result{background:var(--bg-card);border:1px solid var(--teal);border-radius:6px;padding:14px;margin-top:12px;}
+  .food-item-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line);gap:10px;}
+  .food-item-row:last-child{border-bottom:none;}
+  .food-item-meta{font-size:0.8rem;color:var(--muted);}
+
+  .save-banner{display:none;background:rgba(226,125,96,0.12);border:1px solid var(--bad);color:var(--bad);
+    border-radius:6px;padding:12px 16px;margin-bottom:20px;font-size:0.88rem;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .save-banner.show{display:flex;}
+
+  .quote-box{position:relative;margin-top:18px;padding:16px 20px 16px 44px;background:rgba(244,183,64,0.08);
+    border:1px solid rgba(244,183,64,0.35);border-radius:6px;}
+  .quote-mark{position:absolute;left:12px;top:10px;font-family:'Chakra Petch',sans-serif;font-size:2rem;color:var(--accent);line-height:1;opacity:0.7;}
+  .quote-text{font-size:0.98rem;font-weight:600;color:var(--ink);}
+  .quote-refresh{background:transparent;border:none;color:var(--accent);font-size:0.78rem;cursor:pointer;margin-top:8px;
+    padding:6px 0;text-decoration:underline;touch-action:manipulation;}
+
+  .month-stepper{display:flex;align-items:center;margin:18px 0 26px;}
+  .step-node{display:flex;flex-direction:column;align-items:center;flex:1;position:relative;}
+  .step-dot{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:var(--bg-alt);
+    display:flex;align-items:center;justify-content:center;font-family:'Chakra Petch',sans-serif;font-weight:700;
+    font-size:0.9rem;color:var(--muted);z-index:1;}
+  .step-node.done .step-dot{border-color:var(--good);color:var(--good);background:rgba(111,207,151,0.1);}
+  .step-node.current .step-dot{border-color:var(--accent);color:var(--accent-ink);background:var(--accent);
+    box-shadow:0 0 0 5px rgba(244,183,64,0.18);}
+  .step-line{position:absolute;top:17px;left:-50%;width:100%;height:2px;background:var(--line);z-index:0;}
+  .step-node:first-child .step-line{display:none;}
+  .step-node.done .step-line, .step-node.current .step-line{background:var(--accent);}
+  .step-label{margin-top:8px;font-size:0.76rem;color:var(--muted);text-align:center;}
+  .step-node.current .step-label{color:var(--accent);font-weight:600;}
+
+  .photo-gallery{display:flex;gap:16px;overflow-x:auto;padding-bottom:8px;}
+  .photo-group{flex-shrink:0;min-width:120px;}
+  .photo-group-label{font-family:'Chakra Petch',sans-serif;font-size:0.8rem;color:var(--accent);margin-bottom:8px;font-weight:600;}
+  .photo-thumb{width:120px;height:150px;object-fit:cover;border-radius:6px;border:1px solid var(--line);cursor:pointer;display:block;margin-bottom:6px;}
+  .photo-date{font-size:0.72rem;color:var(--muted);text-align:center;}
+
+  .photo-upload-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
+  .photo-preview{width:70px;height:88px;object-fit:cover;border-radius:6px;border:1px solid var(--line);}
+  .photo-input-label{display:inline-flex;align-items:center;gap:8px;background:var(--bg-card);border:1px dashed var(--muted);
+    border-radius:6px;padding:10px 16px;cursor:pointer;font-size:0.88rem;color:var(--teal);min-height:44px;}
+  .perf-thumb{width:40px;height:50px;object-fit:cover;border-radius:4px;border:1px solid var(--line);}
+
+  .ring-row{display:flex;align-items:center;gap:24px;margin-bottom:26px;flex-wrap:wrap;}
+  .ring-wrap{position:relative;width:120px;height:120px;flex-shrink:0;}
+  .progress-ring{width:120px;height:120px;transform:rotate(-90deg);}
+  .ring-bg{fill:none;stroke:var(--line);stroke-width:10;}
+  .ring-fg{fill:none;stroke:var(--accent);stroke-width:10;stroke-linecap:round;stroke-dasharray:326.7;stroke-dashoffset:326.7;
+    transition:stroke-dashoffset 0.6s ease;}
+  .ring-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .ring-label span{font-family:'Chakra Petch',sans-serif;font-size:1.7rem;font-weight:700;color:var(--accent);}
+  .ring-label small{color:var(--muted);font-size:0.72rem;}
+  .ring-side-title{font-family:'Chakra Petch',sans-serif;font-size:1.15rem;font-weight:700;color:var(--ink);}
+  .ring-side-sub{color:var(--teal);font-size:0.88rem;margin-top:4px;}
+
+  .lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:100;align-items:center;justify-content:center;padding:24px;}
+  .lightbox.show{display:flex;}
+  .lightbox img{max-width:100%;max-height:90vh;border-radius:6px;}
+  .lightbox-close{position:absolute;top:20px;right:24px;color:#fff;font-size:2rem;line-height:1;cursor:pointer;background:none;border:none;}
+
+  .footer-note{margin-top:50px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:0.82rem;}
+
+  .loading{color:var(--muted);font-size:0.9rem;padding:20px 0;}
+
+  @media (max-width:520px){
+    .wrap{padding:28px 14px 72px;}
+    .quest{flex-direction:column;align-items:stretch;}
+    .perf-row{flex-direction:column;align-items:flex-start;}
+    .tabbar{position:static;}
+    .tab-btn{min-width:76px;font-size:0.78rem;padding:9px 6px;}
+  }
+  @media (min-width:768px){
+    .wrap{max-width:920px;padding-top:56px;}
+    .hero{padding:40px 44px;}
+    .card{padding:24px 28px;}
+    .stat-grid{grid-template-columns:repeat(4,1fr);}
+    .field-row{grid-template-columns:repeat(4,1fr);}
+    .tabbar{max-width:600px;margin-left:auto;margin-right:auto;}
+    body{font-size:16.5px;}
+    .check-row{padding:13px 6px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <p class="hero-eyebrow">คาดการณ์ระยะเวลา</p>
+    <p class="hero-num">3–4 เดือน</p>
+    <p class="hero-sub">สู่ Muscle-up ครั้งแรก</p>
+    <p class="hero-note">ตัวเลขจริงมาจากผลเช็คสมรรถนะที่คุณบันทึก — ตั้งวันเริ่มโปรแกรมไว้เพื่อให้ระบบคำนวณเดือนปัจจุบันให้อัตโนมัติ</p>
+    <div class="quote-box" style="position:relative;">
+      <span class="quote-mark">&ldquo;</span>
+      <div class="quote-text" id="quoteText"></div>
+      <button class="quote-refresh" id="quoteRefreshBtn">คำคมใหม่</button>
+    </div>
+  </div>
+
+  <div class="save-banner" id="saveBanner">
+    <span>บันทึกข้อมูลล่าสุดไม่สำเร็จ (การเชื่อมต่อขัดข้องชั่วคราว) — ข้อมูลยังอยู่ในหน้านี้ ลองกดบันทึกใหม่ได้</span>
+    <button class="btn small" id="retrySaveBtn">ลองบันทึกอีกครั้ง</button>
+  </div>
+
+  <div class="card">
+    <label for="startDate">วันที่เริ่มโปรแกรม</label>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <input type="date" id="startDate" style="max-width:200px;">
+      <span id="startDateStatus" class="save-status">บันทึกแล้ว</span>
+    </div>
+  </div>
+
+  <div id="loadingMsg" class="loading">กำลังโหลดข้อมูล...</div>
+
+  <div id="appBody" style="display:none;">
+
+    <div class="tabbar">
+      <button class="tab-btn active" data-tab="overview">ภาพรวม</button>
+      <button class="tab-btn" data-tab="checklist">เช็คลิสต์</button>
+      <button class="tab-btn" data-tab="protein">อาหาร</button>
+      <button class="tab-btn" data-tab="perf">สมรรถนะ</button>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div class="tab-panel active" data-panel="overview">
+      <div class="ring-row">
+        <div class="ring-wrap">
+          <svg class="progress-ring" viewBox="0 0 120 120">
+            <circle class="ring-bg" cx="60" cy="60" r="52"/>
+            <circle class="ring-fg" id="ringFg" cx="60" cy="60" r="52"/>
+          </svg>
+          <div class="ring-label"><span id="ringPct">0%</span><small>เช็คลิสต์วันนี้</small></div>
+        </div>
+        <div>
+          <div class="ring-side-title" id="ringTitle">เริ่มวันนี้เลย!</div>
+          <div class="ring-side-sub" id="ringStreak">ทำต่อเนื่อง 0 วัน</div>
+        </div>
+      </div>
+
+      <div class="section" style="margin-top:0;">
+        <h2>สรุปวันนี้</h2>
+        <div class="stat-grid" id="overviewStats"></div>
+        <div class="quick-actions">
+          <button class="btn" data-jump="checklist">ไปติ๊กเช็คลิสต์วันนี้</button>
+          <button class="btn secondary" data-jump="perf">บันทึกผลทดสอบ</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>เป้าหมายรายเดือน และเกณฑ์ผ่าน</h2>
+        <p class="section-desc">แถวที่ไฮไลต์ = เดือนปัจจุบัน เทียบกับผลทดสอบล่าสุดของคุณ</p>
+        <div class="month-stepper" id="monthStepper"></div>
+        <table id="milestoneTable">
+          <tr><th>เดือน</th><th>ดึงข้อ</th><th>Chest-to-bar</th><th>Dips</th><th>False grip</th><th>เกณฑ์ผ่าน</th></tr>
+          <tr data-month="1"><td>1</td><td>12</td><td>5</td><td>10</td><td>—</td><td>ดึงข้อ 12 + CTB 5 + Dips 10 เซตเดียว</td></tr>
+          <tr data-month="2"><td>2</td><td>15</td><td>8</td><td>15</td><td>20 วิ</td><td>CTB 8 + Dips 15 + Negative MU x3</td></tr>
+          <tr data-month="3"><td>3</td><td>—</td><td>10–12</td><td>18–20</td><td>30 วิ</td><td>Muscle-up ใช้ตัวช่วย สำเร็จ 2 ครั้ง</td></tr>
+          <tr data-month="4"><td>4</td><td>—</td><td>—</td><td>—</td><td>—</td><td>Muscle-up ล้วน สำเร็จ 1–3 ครั้ง</td></tr>
+        </table>
+        <div class="status-box" id="statusBox"></div>
+      </div>
+
+      <div class="section">
+        <h2>ภาพความก้าวหน้า</h2>
+        <p class="section-desc">รูปที่แนบตอนบันทึกผลทดสอบ จะมาโชว์ที่นี่ จัดกลุ่มตามเดือนของโปรแกรม</p>
+        <div class="photo-gallery" id="photoGallery"></div>
+      </div>
+
+      <div class="section">
+        <h2>ประวัติ 14 วันล่าสุด</h2>
+        <div id="dailyHistoryOverview" class="history-list"></div>
+      </div>
+    </div>
+
+    <!-- CHECKLIST -->
+    <div class="tab-panel" data-panel="checklist">
+      <div class="section" style="margin-top:0;">
+        <h2>เช็คลิสต์รายวัน</h2>
+        <p class="section-desc">เลือกวันที่ ระบบจะดึงเมนูของวันนั้นมาให้อัตโนมัติ ติ๊ก/กรอกแล้วบันทึกทันที</p>
+
+        <div class="card">
+          <div class="day-head">
+            <div>
+              <label for="checklistDate" style="margin-bottom:2px;">วันที่</label>
+              <input type="date" id="checklistDate" style="max-width:180px;">
+            </div>
+            <h3 id="dayTitle"></h3>
+            <span class="save-status" id="dailySaveStatus">บันทึกแล้ว</span>
+          </div>
+
+          <div class="quest">
+            <div class="quest-field"><label>กระโดดเชือก (เป้า 1000)</label><input type="number" id="jumpropeInput" min="0" placeholder="0"></div>
+            <div class="quest-field"><label>วิดพื้นเสริม (เป้า +30)</label><input type="number" id="pushupExtraInput" min="0" placeholder="0"></div>
+          </div>
+
+          <div id="checklistItems"></div>
+
+          <div style="margin-top:14px;">
+            <label for="dailyNote">โน้ตวันนี้ (ไม่บังคับ)</label>
+            <textarea id="dailyNote" placeholder="เช่น รู้สึกอย่างไร, ปรับน้ำหนัก/เซตยังไงบ้าง"></textarea>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-top:0;font-size:0.98rem;">ประวัติ 14 วันล่าสุด</h3>
+          <div id="dailyHistory" class="history-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROTEIN / FOOD -->
+    <div class="tab-panel" data-panel="protein">
+      <div class="section" style="margin-top:0;">
+        <h2>บันทึกอาหาร &amp; โปรตีน</h2>
+        <div class="protein-hero">
+          <span class="num">130–150 กรัม</span>
+          <span class="lbl">เป้าหมายโปรตีน/วัน (≈1.6–2 ก./น้ำหนักตัว 1 กก.) · แคลอรี่โดยประมาณ ~2,300 kcal/วัน</span>
+        </div>
+
+        <div class="card">
+          <label for="foodDate">วันที่</label>
+          <input type="date" id="foodDate" style="max-width:180px;margin-bottom:14px;">
+
+          <label for="foodInput">ชื่อเมนู</label>
+          <input type="text" id="foodInput" placeholder="เช่น ข้าวกะเพราไก่ไข่ดาว">
+          <div class="field-row" style="margin-top:12px;">
+            <div><label for="foodCalories">แคลอรี่ (kcal)</label><input type="number" id="foodCalories" min="0"></div>
+            <div><label for="foodProtein">โปรตีน (ก.)</label><input type="number" id="foodProtein" min="0"></div>
+            <div><label for="foodCarbs">คาร์บ (ก.)</label><input type="number" id="foodCarbs" min="0"></div>
+            <div><label for="foodFat">ไขมัน (ก.)</label><input type="number" id="foodFat" min="0"></div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;margin-top:10px;">
+            <button class="btn" id="analyzeFoodBtn">+ บันทึกรายการนี้</button>
+            <span class="save-status" id="foodAnalyzeStatus">บันทึกแล้ว</span>
+          </div>
+          <p class="section-desc" style="margin:10px 0 0;">เวอร์ชันนี้กรอกค่าสารอาหารเอง (ดูตัวเลขคร่าวๆ จากฉลากหรือแอปนับแคลอรี่) เพราะฟีเจอร์วิเคราะห์ด้วย AI ใช้ได้เฉพาะตอนเปิดผ่าน Claude เท่านั้น</p>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-top:0;font-size:0.98rem;">สรุปวันนี้</h3>
+          <div class="food-totals" id="foodTotals"></div>
+          <div id="foodLogList"></div>
+        </div>
+
+        <table>
+          <tr><th>มื้อ</th><th>ตัวอย่างอาหาร</th><th>โปรตีน</th></tr>
+          <tr><td>เช้า</td><td>ไข่ 3 ฟอง + นมโปรตีน/นมจืด 1 แก้ว</td><td>~30 ก.</td></tr>
+          <tr><td>กลางวัน</td><td>อกไก่/ปลา 200 ก. + ข้าว + ผัก</td><td>~45 ก.</td></tr>
+          <tr><td>บ่าย</td><td>เวย์โปรตีน 1 สกู๊ป หรือเต้าหู้ 200 ก.</td><td>~25 ก.</td></tr>
+          <tr><td>เย็น</td><td>เนื้อ/ปลา/ไข่ 150–200 ก. + ผัก</td><td>~35 ก.</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- PERFORMANCE -->
+    <div class="tab-panel" data-panel="perf">
+      <div class="section" style="margin-top:0;">
+        <h2>เช็คสมรรถนะ</h2>
+        <p class="section-desc">บันทึกทุกสิ้นเดือน กรอกวันเดิมซ้ำ = แก้ไขข้อมูลของวันนั้น</p>
+
+        <div class="card">
+          <div class="field-row">
+            <div><label for="perfDate">วันที่ทดสอบ</label><input type="date" id="perfDate"></div>
+            <div><label for="perfPullups">ดึงข้อ (ครั้ง)</label><input type="number" id="perfPullups" min="0"></div>
+            <div><label for="perfCtb">Chest-to-bar (ครั้ง)</label><input type="number" id="perfCtb" min="0"></div>
+            <div><label for="perfPushups">วิดพื้น (ครั้ง)</label><input type="number" id="perfPushups" min="0"></div>
+          </div>
+          <div class="field-row">
+            <div><label for="perfDips">Dips (ครั้ง)</label><input type="number" id="perfDips" min="0"></div>
+            <div><label for="perfFalsegrip">False grip (วินาที)</label><input type="number" id="perfFalsegrip" min="0"></div>
+            <div><label for="perfPlank">Plank (วินาที)</label><input type="number" id="perfPlank" min="0"></div>
+            <div><label for="perfWeight">น้ำหนัก (กก.)</label><input type="number" id="perfWeight" min="0" step="0.1"></div>
+          </div>
+          <div class="field-row"><div><label for="perfWaist">รอบเอว (ซม.)</label><input type="number" id="perfWaist" min="0" step="0.1"></div></div>
+
+          <label>ภาพความคืบหน้า (ไม่บังคับ)</label>
+          <div class="photo-upload-row">
+            <label class="photo-input-label" for="perfPhotoInput">📷 ถ่าย/แนบรูป</label>
+            <input type="file" id="perfPhotoInput" accept="image/*" capture="environment" style="display:none;">
+            <img id="perfPhotoPreview" class="photo-preview" style="display:none;">
+            <button class="btn danger" id="perfPhotoRemoveBtn" style="display:none;">ลบรูป</button>
+          </div>
+
+          <div style="display:flex;gap:10px;align-items:center;">
+            <button class="btn" id="savePerfBtn">บันทึกผลทดสอบ</button>
+            <button class="btn secondary small" id="clearPerfFormBtn">ล้างฟอร์ม (บันทึกใหม่)</button>
+            <span class="save-status" id="perfSaveStatus">บันทึกแล้ว</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-top:0;font-size:0.98rem;">ประวัติผลทดสอบทั้งหมด</h3>
+          <div id="perfHistory"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="footer-note">ข้อมูลทั้งหมดบันทึกไว้ในเบราว์เซอร์ของคุณเท่านั้น เห็นเฉพาะคุณคนเดียว การวิเคราะห์อาหารเป็นการประมาณการโดย AI ไม่ใช่ค่าทางโภชนาการที่แม่นยำ 100% — เคยมีประวัติไทรอยด์มาก่อน หากระหว่างซ้อมมีอาการใจสั่น เหนื่อยผิดปกติ หรืออ่อนเพลียมาก ให้พักและปรึกษาแพทย์ &nbsp;·&nbsp; <span id="resetLink" style="text-decoration:underline;cursor:pointer;">ล้างข้อมูลทั้งหมด</span></p>
+
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lightboxClose">&times;</button>
+  <img id="lightboxImg" src="">
+</div>
+
+<script>
+// ==========================================================================
+// ตั้งค่าตรงนี้: วาง URL ของ Google Apps Script Web App ที่ deploy แล้ว
+// ตัวอย่าง: "https://script.google.com/macros/s/AKfycb.../exec"
+// ดูวิธีสร้างในคู่มือ "คู่มือส่งออกเว็บแอป.md" ที่แนบมาด้วย
+// ==========================================================================
+const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbz3_kqAXxfl9TLdasKFTdRLdKCIDDFCNPmwxiY91DgxSAsBcikVF5WFmjuhwxyN2Zybqw/exec";
+// ==========================================================================
+
+// ---------- Icons (simple original line-art pictograms) ----------
+const ICONS = {
+  pull: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="4" y1="3" x2="20" y2="3"/><line x1="10" y1="7" x2="7" y2="3"/><line x1="14" y1="7" x2="17" y2="3"/><circle cx="12" cy="7" r="2"/><line x1="12" y1="9" x2="12" y2="15"/><line x1="12" y1="15" x2="9" y2="19"/><line x1="12" y1="15" x2="15" y2="19"/></svg>`,
+  push: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="4.5" cy="11" r="2"/><line x1="6.5" y1="11" x2="19" y2="8"/><line x1="9" y1="11" x2="9" y2="17"/><line x1="19" y1="8" x2="21" y2="13"/></svg>`,
+  squat: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="4.5" r="2"/><line x1="12" y1="6.5" x2="12" y2="12"/><line x1="12" y1="8" x2="16" y2="9"/><line x1="12" y1="8" x2="8" y2="9"/><line x1="12" y1="12" x2="9" y2="16"/><line x1="12" y1="12" x2="15" y2="16"/><line x1="9" y1="16" x2="9" y2="20"/><line x1="15" y1="16" x2="15" y2="20"/></svg>`,
+  core: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="4.5" cy="14" r="2"/><line x1="6.5" y1="14" x2="20" y2="10"/><line x1="12" y1="12.3" x2="12" y2="19"/></svg>`,
+  row: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="6" cy="6" r="2"/><line x1="7" y1="8" x2="14" y2="14"/><line x1="14" y1="14" x2="14" y2="20"/><line x1="10" y1="11" x2="8" y2="7"/></svg>`,
+  press: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="5" r="2"/><line x1="12" y1="7" x2="12" y2="14"/><line x1="12" y1="9" x2="7" y2="4"/><line x1="12" y1="9" x2="17" y2="4"/><line x1="12" y1="14" x2="9" y2="20"/><line x1="12" y1="14" x2="15" y2="20"/></svg>`,
+  kettlebell: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="4.5" r="2"/><line x1="12" y1="6.5" x2="12" y2="12"/><line x1="12" y1="12" x2="9" y2="20"/><line x1="12" y1="12" x2="15" y2="20"/><line x1="12" y1="12" x2="12" y2="16"/><circle cx="12" cy="18" r="2"/></svg>`,
+  jump: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="4.5" r="2"/><line x1="12" y1="6.5" x2="12" y2="13"/><line x1="12" y1="13" x2="12" y2="19"/><path d="M5 10 C8 17, 16 17, 19 10"/></svg>`,
+  dip: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="6" y1="4" x2="6" y2="20"/><line x1="18" y1="4" x2="18" y2="20"/><circle cx="12" cy="7" r="2"/><line x1="12" y1="9" x2="12" y2="14"/><line x1="12" y1="9" x2="6" y2="9"/><line x1="12" y1="9" x2="18" y2="9"/><line x1="12" y1="14" x2="15" y2="16"/><line x1="15" y1="16" x2="15" y2="12"/></svg>`,
+  circuit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="4.5" r="2"/><line x1="12" y1="6.5" x2="12" y2="14"/><line x1="12" y1="8" x2="6" y2="4"/><line x1="12" y1="8" x2="18" y2="4"/><line x1="12" y1="14" x2="7" y2="20"/><line x1="12" y1="14" x2="17" y2="20"/></svg>`,
+  cardio: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="6" cy="5" r="2"/><line x1="7" y1="7" x2="10" y2="13"/><line x1="10" y1="13" x2="8" y2="20"/><line x1="10" y1="13" x2="16" y2="11"/><line x1="7" y1="7" x2="13" y2="9"/><line x1="13" y1="9" x2="18" y2="5"/></svg>`,
+  rest: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M18 12.5A7 7 0 1 1 11.5 6 5.5 5.5 0 0 0 18 12.5Z"/></svg>`,
+  default: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="9" y="9" width="6" height="6" rx="1"/><line x1="4" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="20" y2="12"/><line x1="4" y1="9" x2="4" y2="15"/><line x1="20" y1="9" x2="20" y2="15"/></svg>`,
+};
+
+const TEMPLATES = {
+  1: {title:'จันทร์ — Pull + Core', items:[
+    {id:'pull1', label:'ดึงข้อ 5 เซต (รวม 30–35 ครั้ง)', icon:'pull'},
+    {id:'pull2', label:'Chest-to-bar pull-up 4 เซต x 4–6', icon:'pull'},
+    {id:'pull3', label:'Bent-over Row ดัมเบล 4 เซต x 12', icon:'row'},
+    {id:'pull4', label:'Single-arm Row 3 เซต x 10/ข้าง', icon:'row'},
+    {id:'pull5', label:'Face Pull / Reverse Fly 3 เซต x 15', icon:'row'},
+    {id:'pull6', label:'Hanging Leg Raise 4 เซต x 10–12', icon:'core'},
+    {id:'pull7', label:'Plank 3 เซต x 45–60 วินาที', icon:'core'},
+  ]},
+  2: {title:'อังคาร — Push (อก/ไหล่/แขน)', items:[
+    {id:'push1', label:'วิดพื้น 5 เซต (รวม 80–100 ครั้ง)', icon:'push'},
+    {id:'push2', label:'Diamond Push-up 3 เซต x 12–15', icon:'push'},
+    {id:'push3', label:'Dumbbell Shoulder Press 4 เซต x 12', icon:'press'},
+    {id:'push4', label:'Dumbbell Chest Press 4 เซต x 12', icon:'press'},
+    {id:'push5', label:'Dips 4 เซต x เท่าที่ไหว', icon:'dip'},
+    {id:'push6', label:'Bar Dip (ดิฟบนบาร์เดี่ยว) 3 เซต x 8–10', icon:'dip'},
+    {id:'push7', label:'Lateral Raise ดัมเบล 3 เซต x 15', icon:'press'},
+    {id:'push8', label:'Bicycle Crunch 3 เซต x 20', icon:'core'},
+  ]},
+  3: {title:'พุธ — ขา + HIIT', items:[
+    {id:'leg1', label:'Goblet Squat 5 เซต x 15–20', icon:'squat'},
+    {id:'leg2', label:'Bulgarian Split Squat 3 เซต x 10/ขา', icon:'squat'},
+    {id:'leg3', label:'Kettlebell Swing 4 เซต x 15–20', icon:'kettlebell'},
+    {id:'leg4', label:'Walking Lunge 3 เซต x 12/ขา', icon:'squat'},
+    {id:'leg5', label:'Calf Raise 3 เซต x 20', icon:'squat'},
+    {id:'leg6', label:'HIIT กระโดดเชือก 30วิ/พัก30วิ x 10 รอบ', icon:'jump'},
+  ]},
+  4: {title:'พฤหัสบดี — Muscle-up Skill Day', items:[
+    {id:'mu1', label:'Explosive Pull-up 5 เซต x 3–5', icon:'pull'},
+    {id:'mu2', label:'False Grip Hang 4 เซต x 15–20 วินาที', icon:'pull'},
+    {id:'mu3', label:'Negative Muscle-up 4 เซต x 3–5', icon:'pull'},
+    {id:'mu4', label:'Dips เน้นแข็งแรง 4 เซต x 8–12', icon:'dip'},
+    {id:'mu5', label:'Straight Bar / Russian Dip 3 เซต x 5–8', icon:'dip'},
+  ]},
+  5: {title:'ศุกร์ — Full Body Circuit', items:[
+    {id:'fb1', label:'Circuit x 3–4 รอบ (Jump Squat/วิดพื้น/KB Swing/ดึงข้อ/Mountain Climber/กระโดดเชือก)', icon:'circuit'},
+    {id:'fb2', label:'Hanging Leg Raise 4 เซต x 12', icon:'core'},
+    {id:'fb3', label:'Russian Twist ดัมเบล 3 เซต x 20', icon:'core'},
+    {id:'fb4', label:'Plank to Push-up 3 เซต x 10', icon:'core'},
+  ]},
+  6: {title:'เสาร์ — คาร์ดิโอเบา', items:[
+    {id:'sat1', label:'เดินหรือวิ่งเบา 20–30 นาที', icon:'cardio'},
+    {id:'sat2', label:'ยืดเหยียดกล้ามเนื้อทั่วร่างกาย 10–15 นาที', icon:'core'},
+  ]},
+  0: {title:'อาทิตย์ — พักเต็มวัน', items:[
+    {id:'sun1', label:'พักผ่อนเต็มที่ ไม่ฝึกท่าหลัก', icon:'rest'},
+  ]},
+};
+
+const MONTH_TARGETS = {
+  1: {pullups:12, ctb:5, dips:10},
+  2: {pullups:15, ctb:8, dips:15, falsegrip:20},
+  3: {ctb:11, dips:19, falsegrip:30},
+  4: {},
+};
+
+const QUOTES = [
+  'วันที่ไม่อยากซ้อม คือวันที่สำคัญที่สุด — เพราะมันฝึกวินัย ไม่ใช่แค่กล้ามเนื้อ',
+  'ทุกครั้งที่ดึงข้อเพิ่มอีก 1 ครั้ง คือก้าวหนึ่งที่ใกล้ Muscle-up มากขึ้น',
+  'พุงที่ลดไม่ได้ในวันเดียว แต่มื้อที่เลือกดีในวันนี้ ส่งผลถึงวันนั้นแน่นอน',
+  'ร่างกายจำทุกเซตที่ตั้งใจทำ แม้ใจจะลืมไปแล้วก็ตาม',
+  'ความสม่ำเสมอธรรมดาๆ เอาชนะความหนักหน่วงแบบไม่ต่อเนื่องเสมอ',
+  'ไม่มีวันไหนสายเกินไปที่จะเริ่มเซตแรก มีแต่วันที่ยังไม่ได้เริ่ม',
+  'Muscle-up ไม่ได้เกิดจากแรงระเบิดวันเดียว แต่เกิดจากสัปดาห์ที่ไม่ขาดหาย',
+  'เหนื่อยได้ ท้อได้ แต่อย่าหยุด — ร่างกายพัฒนาได้เร็วกว่าที่ใจคิดเสมอ',
+  'สิ่งที่วัดผลได้ คือสิ่งที่พัฒนาได้ นั่นคือเหตุผลที่ต้องจดทุกเซต',
+  'คนที่ทำ Muscle-up ได้ ก็เคยดึงข้อไม่ขึ้นสักครั้งมาก่อนเหมือนกัน',
+  'พักผ่อนให้พอ กินให้ครบ แล้วปล่อยให้ร่างกายทำงานของมัน',
+  'ทุกหยดเหงื่อวันนี้ คือดอกเบี้ยของกล้ามเนื้อที่จะโตวันหน้า',
+];
+let quoteIndex = 0;
+function dayOfYear(){
+  const now = new Date();
+  const start = new Date(now.getFullYear(),0,0);
+  return Math.floor((now - start) / 86400000);
+}
+function renderQuote(){
+  document.getElementById('quoteText').textContent = QUOTES[quoteIndex % QUOTES.length];
+}
+
+let dailyLog = {};
+let perfLog = {};
+let foodLog = {};
+let settings = {startDate:null};
+let currentPerfPhoto = null;
+
+function compressImage(file, maxWidth, quality){
+  maxWidth = maxWidth || 800; quality = quality || 0.7;
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const scale = Math.min(1, maxWidth / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function openLightbox(src){
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightbox').classList.add('show');
+}
+function closeLightbox(){
+  document.getElementById('lightbox').classList.remove('show');
+}
+
+function todayStr(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function fmtDateShort(dateStr){ const [y,m,d] = dateStr.split('-'); return `${d}/${m}`; }
+function addDays(dateStr, n){
+  const d = new Date(dateStr + 'T00:00:00'); d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// ---------- Storage via Google Sheets (Apps Script Web App) with retry + failure banner ----------
+let pendingSaves = {};
+function showSaveBanner(){ document.getElementById('saveBanner').classList.add('show'); }
+function hideSaveBanner(){ document.getElementById('saveBanner').classList.remove('show'); }
+
+async function sheetGet(key){
+  const res = await fetch(SHEET_API_URL + '?key=' + encodeURIComponent(key));
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  const text = await res.text();
+  if(!text || text === 'null') return null;
+  return JSON.parse(text);
+}
+
+async function sheetSet(key, valueObj){
+  const json = JSON.stringify(valueObj);
+  // text/plain avoids a CORS "preflight" request that Apps Script doesn't handle well
+  const res = await fetch(SHEET_API_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+    body: JSON.stringify({key: key, value: json}),
+  });
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+}
+
+async function storageSetWithRetry(key, valueObj, retries){
+  retries = retries === undefined ? 3 : retries;
+  for(let i=0;i<retries;i++){
+    try{
+      await sheetSet(key, valueObj);
+      delete pendingSaves[key];
+      if(Object.keys(pendingSaves).length === 0) hideSaveBanner();
+      return true;
+    }catch(e){
+      if(i < retries-1) await new Promise(r=>setTimeout(r, 500*(i+1)));
+    }
+  }
+  pendingSaves[key] = valueObj;
+  showSaveBanner();
+  return false;
+}
+
+async function retryAllPendingSaves(){
+  const keys = Object.keys(pendingSaves);
+  for(const key of keys){
+    await storageSetWithRetry(key, pendingSaves[key]);
+  }
+  if(keys.length === 0){
+    await saveDailyLog(); await savePerfLog(); await saveFoodLog(); await saveSettings();
+  }
+}
+
+async function loadData(){
+  if(!SHEET_API_URL || SHEET_API_URL.indexOf('http') !== 0){
+    alert('ยังไม่ได้ตั้งค่า SHEET_API_URL ในไฟล์นี้ — ดูวิธีตั้งค่าในคู่มือที่แนบมา');
+  }
+  try{ dailyLog = (await sheetGet('daily-log')) || {}; }catch(e){ dailyLog = {}; showSaveBanner(); }
+  try{ perfLog = (await sheetGet('perf-log')) || {}; }catch(e){ perfLog = {}; showSaveBanner(); }
+  try{ foodLog = (await sheetGet('food-log')) || {}; }catch(e){ foodLog = {}; showSaveBanner(); }
+  try{ settings = (await sheetGet('settings')) || {startDate:null}; }catch(e){ settings = {startDate:null}; showSaveBanner(); }
+}
+async function saveDailyLog(){ return storageSetWithRetry('daily-log', dailyLog); }
+async function savePerfLog(){ return storageSetWithRetry('perf-log', perfLog); }
+async function saveFoodLog(){ return storageSetWithRetry('food-log', foodLog); }
+async function saveSettings(){ return storageSetWithRetry('settings', settings); }
+
+function flashStatus(el){ el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove('show'), 1400); }
+
+// ---------- Tabs ----------
+function switchTab(tabName){
+  document.querySelectorAll('.tab-btn').forEach(b=> b.classList.toggle('active', b.dataset.tab === tabName));
+  document.querySelectorAll('.tab-panel').forEach(p=> p.classList.toggle('active', p.dataset.panel === tabName));
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ---------- Daily checklist ----------
+function renderChecklistDay(dateStr){
+  const weekday = new Date(dateStr + 'T00:00:00').getDay();
+  const tpl = TEMPLATES[weekday];
+  document.getElementById('dayTitle').textContent = tpl.title;
+
+  const entry = dailyLog[dateStr] || {checks:{}, jumprope:'', pushupExtra:'', note:''};
+  document.getElementById('jumpropeInput').value = entry.jumprope || '';
+  document.getElementById('pushupExtraInput').value = entry.pushupExtra || '';
+  document.getElementById('dailyNote').value = entry.note || '';
+
+  const container = document.getElementById('checklistItems');
+  container.innerHTML = '';
+  tpl.items.forEach(item=>{
+    const row = document.createElement('div');
+    row.className = 'check-row';
+    row.dataset.itemId = item.id;
+
+    const iconWrap = document.createElement('span');
+    iconWrap.className = 'ex-icon';
+    iconWrap.innerHTML = ICONS[item.icon] || ICONS.default;
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = !!(entry.checks && entry.checks[item.id]);
+    cb.addEventListener('change', ()=> onDailyFieldChange(dateStr));
+
+    const label = document.createElement('span');
+    label.className = 'check-label';
+    label.textContent = item.label;
+
+    row.appendChild(iconWrap);
+    row.appendChild(cb);
+    row.appendChild(label);
+    row.addEventListener('click', (e)=>{
+      if(e.target !== cb){ cb.checked = !cb.checked; onDailyFieldChange(dateStr); }
+    });
+    container.appendChild(row);
+  });
+}
+
+function collectDailyEntry(dateStr){
+  const weekday = new Date(dateStr + 'T00:00:00').getDay();
+  const tpl = TEMPLATES[weekday];
+  const checks = {};
+  document.querySelectorAll('#checklistItems .check-row').forEach(row=>{
+    checks[row.dataset.itemId] = row.querySelector('input[type="checkbox"]').checked;
+  });
+  return {
+    checks,
+    jumprope: document.getElementById('jumpropeInput').value,
+    pushupExtra: document.getElementById('pushupExtraInput').value,
+    note: document.getElementById('dailyNote').value,
+    totalItems: tpl.items.length,
+  };
+}
+
+let dailySaveTimer = null;
+function onDailyFieldChange(dateStr){
+  clearTimeout(dailySaveTimer);
+  dailySaveTimer = setTimeout(async ()=>{
+    dailyLog[dateStr] = collectDailyEntry(dateStr);
+    await saveDailyLog();
+    flashStatus(document.getElementById('dailySaveStatus'));
+    renderDailyHistory();
+    renderOverview();
+  }, 400);
+}
+
+function completionPct(dateStr){
+  const entry = dailyLog[dateStr];
+  if(!entry) return 0;
+  const total = entry.totalItems || Object.keys(entry.checks||{}).length || 1;
+  const done = Object.values(entry.checks||{}).filter(Boolean).length;
+  return Math.round((done/total)*100);
+}
+
+function buildHistoryList(container){
+  const dates = Object.keys(dailyLog).sort().reverse().slice(0,14);
+  if(dates.length === 0){ container.innerHTML = '<p class="empty-note">ยังไม่มีข้อมูล เริ่มติ๊กเช็คลิสต์ได้เลย</p>'; return; }
+  container.innerHTML = '';
+  dates.forEach(dateStr=>{
+    const pct = completionPct(dateStr);
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    item.innerHTML = `<span class="history-date">${fmtDateShort(dateStr)}</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div><span class="history-pct">${pct}%</span>`;
+    item.addEventListener('click', ()=>{
+      switchTab('checklist');
+      document.getElementById('checklistDate').value = dateStr;
+      renderChecklistDay(dateStr);
+    });
+    container.appendChild(item);
+  });
+}
+function renderDailyHistory(){
+  buildHistoryList(document.getElementById('dailyHistory'));
+  buildHistoryList(document.getElementById('dailyHistoryOverview'));
+}
+
+// ---------- Food / nutrition (manual entry — AI analysis requires Claude's environment) ----------
+async function addManualFood(){
+  const name = document.getElementById('foodInput').value.trim();
+  const calories = Number(document.getElementById('foodCalories').value) || 0;
+  const protein = Number(document.getElementById('foodProtein').value) || 0;
+  const carbs = Number(document.getElementById('foodCarbs').value) || 0;
+  const fat = Number(document.getElementById('foodFat').value) || 0;
+  if(!name){ document.getElementById('foodInput').focus(); return; }
+
+  const dateStr = document.getElementById('foodDate').value || todayStr();
+  if(!foodLog[dateStr]) foodLog[dateStr] = [];
+  foodLog[dateStr].push({name, calories, protein_g:protein, carbs_g:carbs, fat_g:fat});
+  await saveFoodLog();
+  renderFoodLog(dateStr);
+
+  document.getElementById('foodInput').value = '';
+  document.getElementById('foodCalories').value = '';
+  document.getElementById('foodProtein').value = '';
+  document.getElementById('foodCarbs').value = '';
+  document.getElementById('foodFat').value = '';
+  flashStatus(document.getElementById('foodAnalyzeStatus'));
+}
+
+function renderFoodLog(dateStr){
+  const entries = foodLog[dateStr] || [];
+  const totals = entries.reduce((acc,it)=>{
+    acc.calories += Number(it.calories)||0;
+    acc.protein += Number(it.protein_g)||0;
+    acc.carbs += Number(it.carbs_g)||0;
+    acc.fat += Number(it.fat_g)||0;
+    return acc;
+  }, {calories:0, protein:0, carbs:0, fat:0});
+
+  const totalsBox = document.getElementById('foodTotals');
+  const proteinClass = totals.protein >= 130 ? 'ok' : (totals.protein > 0 ? '' : '');
+  const calClass = totals.calories > 2500 ? 'over' : '';
+  totalsBox.innerHTML = `
+    <div class="food-pill ${calClass}"><div class="fp-label">แคลอรี่</div><div class="fp-value">${Math.round(totals.calories)}</div></div>
+    <div class="food-pill ${proteinClass}"><div class="fp-label">โปรตีน (ก.)</div><div class="fp-value">${Math.round(totals.protein)}</div></div>
+    <div class="food-pill"><div class="fp-label">คาร์บ (ก.)</div><div class="fp-value">${Math.round(totals.carbs)}</div></div>
+    <div class="food-pill"><div class="fp-label">ไขมัน (ก.)</div><div class="fp-value">${Math.round(totals.fat)}</div></div>
+  `;
+
+  const listBox = document.getElementById('foodLogList');
+  if(entries.length === 0){ listBox.innerHTML = '<p class="empty-note">ยังไม่มีรายการอาหารของวันนี้</p>'; return; }
+  listBox.innerHTML = '';
+  entries.forEach((it, idx)=>{
+    const row = document.createElement('div');
+    row.className = 'food-item-row';
+    row.innerHTML = `
+      <div><div>${it.name}</div><div class="food-item-meta">${it.calories} kcal · โปรตีน ${it.protein_g} ก.</div></div>
+      <button class="btn danger" data-idx="${idx}">ลบ</button>
+    `;
+    row.querySelector('[data-idx]').addEventListener('click', async ()=>{
+      foodLog[dateStr].splice(idx,1);
+      await saveFoodLog();
+      renderFoodLog(dateStr);
+    });
+    listBox.appendChild(row);
+  });
+}
+
+// ---------- Performance tests ----------
+function setPerfPhotoPreview(dataUrl){
+  const preview = document.getElementById('perfPhotoPreview');
+  const removeBtn = document.getElementById('perfPhotoRemoveBtn');
+  if(dataUrl){
+    preview.src = dataUrl; preview.style.display = 'block'; removeBtn.style.display = 'inline-block';
+  }else{
+    preview.style.display = 'none'; removeBtn.style.display = 'none'; preview.src = '';
+  }
+}
+
+function clearPerfForm(){
+  document.getElementById('perfDate').value = todayStr();
+  ['perfPullups','perfCtb','perfPushups','perfDips','perfFalsegrip','perfPlank','perfWeight','perfWaist'].forEach(id=> document.getElementById(id).value = '');
+  currentPerfPhoto = null;
+  document.getElementById('perfPhotoInput').value = '';
+  setPerfPhotoPreview(null);
+}
+async function onSavePerf(){
+  const dateStr = document.getElementById('perfDate').value || todayStr();
+  perfLog[dateStr] = {
+    pullups: document.getElementById('perfPullups').value, ctb: document.getElementById('perfCtb').value,
+    pushups: document.getElementById('perfPushups').value, dips: document.getElementById('perfDips').value,
+    falsegrip: document.getElementById('perfFalsegrip').value, plank: document.getElementById('perfPlank').value,
+    weight: document.getElementById('perfWeight').value, waist: document.getElementById('perfWaist').value,
+    photo: currentPerfPhoto || null,
+  };
+  await savePerfLog();
+  flashStatus(document.getElementById('perfSaveStatus'));
+  renderPerfHistory(); updateMilestoneStatus(); renderOverview();
+}
+function renderPerfHistory(){
+  const container = document.getElementById('perfHistory');
+  const dates = Object.keys(perfLog).sort().reverse();
+  if(dates.length === 0){ container.innerHTML = '<p class="empty-note">ยังไม่มีผลทดสอบ กรอกฟอร์มด้านบนแล้วกดบันทึก</p>'; return; }
+  container.innerHTML = '';
+  dates.forEach(dateStr=>{
+    const r = perfLog[dateStr];
+    const row = document.createElement('div');
+    row.className = 'perf-row';
+    const thumbHtml = r.photo ? `<img class="perf-thumb" src="${r.photo}" data-photo="${dateStr}">` : '';
+    row.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;">
+        ${thumbHtml}
+        <div><strong>${dateStr}</strong>
+        <div class="perf-meta">ดึงข้อ ${r.pullups||'-'} · CTB ${r.ctb||'-'} · วิดพื้น ${r.pushups||'-'} · Dips ${r.dips||'-'} · False grip ${r.falsegrip||'-'}s · Plank ${r.plank||'-'}s · น้ำหนัก ${r.weight||'-'}kg · เอว ${r.waist||'-'}cm</div></div>
+      </div>
+      <div class="perf-actions"><button class="btn secondary small" data-action="edit" data-date="${dateStr}">แก้ไข</button><button class="btn danger" data-action="delete" data-date="${dateStr}">ลบ</button></div>
+    `;
+    container.appendChild(row);
+    if(r.photo){
+      row.querySelector('.perf-thumb').addEventListener('click', ()=> openLightbox(r.photo));
+    }
+  });
+  container.querySelectorAll('[data-action="edit"]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const d = btn.dataset.date, r = perfLog[d];
+      document.getElementById('perfDate').value = d;
+      document.getElementById('perfPullups').value = r.pullups||'';
+      document.getElementById('perfCtb').value = r.ctb||'';
+      document.getElementById('perfPushups').value = r.pushups||'';
+      document.getElementById('perfDips').value = r.dips||'';
+      document.getElementById('perfFalsegrip').value = r.falsegrip||'';
+      document.getElementById('perfPlank').value = r.plank||'';
+      document.getElementById('perfWeight').value = r.weight||'';
+      document.getElementById('perfWaist').value = r.waist||'';
+      currentPerfPhoto = r.photo || null;
+      document.getElementById('perfPhotoInput').value = '';
+      setPerfPhotoPreview(currentPerfPhoto);
+      window.scrollTo({top: document.getElementById('perfDate').getBoundingClientRect().top + window.scrollY - 100, behavior:'smooth'});
+    });
+  });
+  container.querySelectorAll('[data-action="delete"]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      delete perfLog[btn.dataset.date];
+      await savePerfLog(); renderPerfHistory(); updateMilestoneStatus(); renderOverview();
+    });
+  });
+}
+
+// ---------- Milestone / month calc ----------
+function currentMonthIndex(){
+  if(!settings.startDate) return 1;
+  const start = new Date(settings.startDate + 'T00:00:00');
+  const days = Math.floor((new Date() - start) / (1000*60*60*24));
+  const weeks = Math.max(0, Math.floor(days/7)) + 1;
+  return Math.min(4, Math.max(1, Math.ceil(weeks/4)));
+}
+function sortedPerfDates(){ return Object.keys(perfLog).sort(); }
+function latestPerfEntry(){ const d = sortedPerfDates(); return d.length ? perfLog[d[d.length-1]] : null; }
+function previousPerfEntry(){ const d = sortedPerfDates(); return d.length > 1 ? perfLog[d[d.length-2]] : null; }
+
+function monthIndexForDate(dateStr){
+  if(!settings.startDate) return 1;
+  const start = new Date(settings.startDate + 'T00:00:00');
+  const d = new Date(dateStr + 'T00:00:00');
+  const days = Math.floor((d - start) / (1000*60*60*24));
+  if(days < 0) return 0;
+  const weeks = Math.floor(days/7) + 1;
+  return Math.min(4, Math.max(1, Math.ceil(weeks/4)));
+}
+
+function renderMonthStepper(){
+  const el = document.getElementById('monthStepper');
+  if(!el) return;
+  const current = currentMonthIndex();
+  el.innerHTML = '';
+  for(let m=1; m<=4; m++){
+    const node = document.createElement('div');
+    node.className = 'step-node' + (m < current ? ' done' : (m === current ? ' current' : ''));
+    node.innerHTML = `<div class="step-line"></div><div class="step-dot">${m < current ? '✓' : m}</div><div class="step-label">เดือน ${m}</div>`;
+    el.appendChild(node);
+  }
+}
+
+function renderPhotoGallery(){
+  const el = document.getElementById('photoGallery');
+  if(!el) return;
+  const dates = Object.keys(perfLog).filter(d=> perfLog[d].photo).sort();
+  if(dates.length === 0){ el.innerHTML = '<p class="empty-note">ยังไม่มีรูปแนบ ลองแนบรูปตอนบันทึกผลทดสอบครั้งถัดไป</p>'; return; }
+  const groups = {};
+  dates.forEach(d=>{
+    const m = monthIndexForDate(d);
+    const key = m === 0 ? 'ก่อนเริ่มโปรแกรม' : `เดือน ${m}`;
+    if(!groups[key]) groups[key] = [];
+    groups[key].push(d);
+  });
+  el.innerHTML = '';
+  Object.keys(groups).forEach(key=>{
+    const group = document.createElement('div');
+    group.className = 'photo-group';
+    group.innerHTML = `<div class="photo-group-label">${key}</div>`;
+    groups[key].forEach(d=>{
+      const img = document.createElement('img');
+      img.className = 'photo-thumb';
+      img.src = perfLog[d].photo;
+      img.addEventListener('click', ()=> openLightbox(perfLog[d].photo));
+      const dateLabel = document.createElement('div');
+      dateLabel.className = 'photo-date';
+      dateLabel.textContent = fmtDateShort(d);
+      group.appendChild(img);
+      group.appendChild(dateLabel);
+    });
+    el.appendChild(group);
+  });
+}
+
+function updateMilestoneStatus(){
+  const month = currentMonthIndex();
+  document.querySelectorAll('#milestoneTable tr[data-month]').forEach(row=> row.classList.toggle('current-month', Number(row.dataset.month) === month));
+  const target = MONTH_TARGETS[month] || {};
+  const latest = latestPerfEntry();
+  const box = document.getElementById('statusBox');
+  box.innerHTML = '';
+  const labelMap = {pullups:'ดึงข้อ', ctb:'Chest-to-bar', dips:'Dips', falsegrip:'False grip'};
+  if(!latest || Object.keys(target).length === 0){
+    box.innerHTML = '<span class="empty-note">บันทึกผลทดสอบเพื่อดูสถานะเทียบเกณฑ์เดือน ' + month + '</span>'; return;
+  }
+  Object.keys(target).forEach(key=>{
+    const need = target[key], have = Number(latest[key] || 0), pass = have >= need;
+    const pill = document.createElement('span');
+    pill.className = 'status-pill ' + (pass ? 'pass' : 'fail');
+    pill.textContent = `${labelMap[key]}: ${have}/${need} ${pass ? '✓' : ''}`;
+    box.appendChild(pill);
+  });
+}
+
+// ---------- Streak ----------
+function computeStreak(){
+  let streak = 0, cursor = todayStr();
+  while(true){
+    const entry = dailyLog[cursor];
+    const active = entry && (completionPct(cursor) > 0 || Number(entry.jumprope||0) > 0 || Number(entry.pushupExtra||0) > 0);
+    if(!active) break;
+    streak++; cursor = addDays(cursor, -1);
+  }
+  return streak;
+}
+
+// ---------- Overview ----------
+function renderOverview(){
+  const today = todayStr();
+  const todayEntry = dailyLog[today] || {checks:{}, jumprope:0, pushupExtra:0};
+  const todayPct = completionPct(today);
+  const jump = Number(todayEntry.jumprope || 0), push = Number(todayEntry.pushupExtra || 0);
+  const month = currentMonthIndex();
+  const latest = latestPerfEntry(), prev = previousPerfEntry();
+  const streak = computeStreak();
+
+  function trendHtml(curr, prevVal, lowerIsBetter){
+    if(curr === null || curr === undefined || curr === '' || !prev) return '';
+    const c = Number(curr), p = Number(prevVal);
+    if(isNaN(c) || isNaN(p) || prevVal === '' || prevVal === undefined) return '';
+    const diff = c - p;
+    if(diff === 0) return '<span class="stat-sub">ไม่เปลี่ยนแปลง</span>';
+    const good = lowerIsBetter ? diff < 0 : diff > 0;
+    const arrow = diff > 0 ? '▲' : '▼';
+    return `<span class="stat-sub ${good ? 'trend-down' : 'trend-up'}">${arrow} ${Math.abs(diff).toFixed(1)} จากครั้งก่อน</span>`;
+  }
+
+  const cards = [
+    {label:'เช็คลิสต์วันนี้', value: todayPct + '%', cls:'accent'},
+    {label:'กระโดดเชือกวันนี้', value: jump + ' / 1000', cls:''},
+    {label:'วิดพื้นเสริมวันนี้', value: push + ' / 30', cls:''},
+    {label:'ทำต่อเนื่อง', value: streak + ' วัน', cls:'teal'},
+    {label:'เดือนปัจจุบัน', value: 'เดือน ' + month + ' / 4', cls:'accent'},
+    {label:'ดึงข้อล่าสุด', value: latest ? (latest.pullups || '-') : '-', sub: latest ? '' : 'ยังไม่บันทึก'},
+    {label:'น้ำหนักล่าสุด', value: latest && latest.weight ? latest.weight + ' กก.' : '-', subHtml: latest && prev ? trendHtml(latest.weight, prev.weight, true) : ''},
+    {label:'รอบเอวล่าสุด', value: latest && latest.waist ? latest.waist + ' ซม.' : '-', subHtml: latest && prev ? trendHtml(latest.waist, prev.waist, true) : ''},
+  ];
+  const grid = document.getElementById('overviewStats');
+  grid.innerHTML = '';
+  cards.forEach(c=>{
+    const div = document.createElement('div');
+    div.className = 'stat-card ' + (c.cls || '');
+    div.innerHTML = `<div class="stat-label">${c.label}</div><div class="stat-value">${c.value}</div>${c.subHtml || (c.sub ? `<div class="stat-sub">${c.sub}</div>` : '')}`;
+    grid.appendChild(div);
+  });
+
+  // Progress ring
+  const circumference = 326.7;
+  const ringFg = document.getElementById('ringFg');
+  if(ringFg) ringFg.style.strokeDashoffset = circumference * (1 - todayPct/100);
+  const ringPctEl = document.getElementById('ringPct');
+  if(ringPctEl) ringPctEl.textContent = todayPct + '%';
+  const ringStreakEl = document.getElementById('ringStreak');
+  if(ringStreakEl) ringStreakEl.textContent = 'ทำต่อเนื่อง ' + streak + ' วัน';
+  const ringTitleEl = document.getElementById('ringTitle');
+  if(ringTitleEl){
+    ringTitleEl.textContent = todayPct === 0 ? 'เริ่มวันนี้เลย!' : (todayPct >= 100 ? 'เยี่ยมมาก! ครบ 100% 🔥' : 'สู้ต่ออีกนิด!');
+  }
+
+  renderMonthStepper();
+  renderPhotoGallery();
+}
+
+// ---------- Init ----------
+async function init(){
+  await loadData();
+  const today = todayStr();
+  if(!settings.startDate){ settings.startDate = today; await saveSettings(); }
+  document.getElementById('startDate').value = settings.startDate;
+  document.getElementById('checklistDate').value = today;
+  document.getElementById('perfDate').value = today;
+  document.getElementById('foodDate').value = today;
+
+  document.getElementById('loadingMsg').style.display = 'none';
+  document.getElementById('appBody').style.display = 'block';
+
+  renderChecklistDay(today);
+  renderDailyHistory();
+  renderPerfHistory();
+  renderFoodLog(today);
+  updateMilestoneStatus();
+  renderQuote();
+  renderOverview();
+
+  document.getElementById('quoteRefreshBtn').addEventListener('click', ()=>{
+    let next;
+    do{ next = Math.floor(Math.random() * QUOTES.length); } while(next === quoteIndex && QUOTES.length > 1);
+    quoteIndex = next;
+    renderQuote();
+  });
+
+  document.getElementById('perfPhotoInput').addEventListener('change', async (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    try{
+      currentPerfPhoto = await compressImage(file);
+      setPerfPhotoPreview(currentPerfPhoto);
+    }catch(err){ console.error('compress photo failed', err); }
+  });
+  document.getElementById('perfPhotoRemoveBtn').addEventListener('click', ()=>{
+    currentPerfPhoto = null;
+    document.getElementById('perfPhotoInput').value = '';
+    setPerfPhotoPreview(null);
+  });
+  document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
+  document.getElementById('lightbox').addEventListener('click', (e)=>{ if(e.target.id === 'lightbox') closeLightbox(); });
+
+  document.querySelectorAll('.tab-btn').forEach(btn=> btn.addEventListener('click', ()=> switchTab(btn.dataset.tab)));
+  document.querySelectorAll('[data-jump]').forEach(btn=> btn.addEventListener('click', ()=> switchTab(btn.dataset.jump)));
+
+  document.getElementById('checklistDate').addEventListener('change', (e)=> renderChecklistDay(e.target.value));
+  document.getElementById('jumpropeInput').addEventListener('input', ()=> onDailyFieldChange(document.getElementById('checklistDate').value));
+  document.getElementById('pushupExtraInput').addEventListener('input', ()=> onDailyFieldChange(document.getElementById('checklistDate').value));
+  document.getElementById('dailyNote').addEventListener('input', ()=> onDailyFieldChange(document.getElementById('checklistDate').value));
+
+  document.getElementById('foodDate').addEventListener('change', (e)=> renderFoodLog(e.target.value));
+  document.getElementById('analyzeFoodBtn').addEventListener('click', addManualFood);
+
+  document.getElementById('startDate').addEventListener('change', async (e)=>{
+    settings.startDate = e.target.value; await saveSettings();
+    flashStatus(document.getElementById('startDateStatus')); updateMilestoneStatus(); renderOverview();
+  });
+
+  document.getElementById('savePerfBtn').addEventListener('click', onSavePerf);
+  document.getElementById('clearPerfFormBtn').addEventListener('click', clearPerfForm);
+  document.getElementById('retrySaveBtn').addEventListener('click', retryAllPendingSaves);
+
+  document.getElementById('resetLink').addEventListener('click', async ()=>{
+    if(!confirm('ล้างข้อมูลทั้งหมด (เช็คลิสต์ + ผลทดสอบ + อาหาร + วันเริ่มโปรแกรม)? ทำแล้วกู้คืนไม่ได้')) return;
+    dailyLog = {}; perfLog = {}; foodLog = {}; settings = {startDate: todayStr()};
+    currentPerfPhoto = null;
+    await saveDailyLog(); await savePerfLog(); await saveFoodLog(); await saveSettings();
+    location.reload();
+  });
+}
+
+init();
+</script>
+</body>
+</html>
