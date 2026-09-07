@@ -305,7 +305,7 @@
     <div class="tab-panel" data-panel="checklist">
       <div class="section" style="margin-top:0;">
         <h2>เช็คลิสต์รายวัน</h2>
-        <p class="section-desc">เลือกวันที่ ระบบจะดึงเมนูของวันนั้นมาให้อัตโนมัติ ติ๊ก/กรอกแล้วบันทึกทันที</p>
+        <p class="section-desc">เลือกวันที่ ระบบจะดึงเมนูของวันนั้นมาให้อัตโนมัติ ติ๊ก/กรอกแล้วกดบันทึก</p>
 
         <div class="card">
           <div class="day-head">
@@ -314,7 +314,6 @@
               <input type="date" id="checklistDate" style="max-width:180px;">
             </div>
             <h3 id="dayTitle"></h3>
-            <span class="save-status" id="dailySaveStatus">บันทึกแล้ว</span>
           </div>
 
           <div class="quest">
@@ -328,6 +327,15 @@
             <label for="dailyNote">โน้ตวันนี้ (ไม่บังคับ)</label>
             <textarea id="dailyNote" placeholder="เช่น รู้สึกอย่างไร, ปรับน้ำหนัก/เซตยังไงบ้าง"></textarea>
           </div>
+
+          <!-- ปุ่มบันทึกเช็คลิสต์ -->
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:20px;">
+            <button id="saveChecklistBtn" class="btn" style="width:100%; min-height:50px; font-size:1.1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">💾 บันทึกเช็คลิสต์วันนี้</button>
+            <div style="text-align:center; min-height:20px;">
+              <span class="save-status" id="dailySaveStatus" style="font-size:0.9rem;">บันทึกข้อมูลเรียบร้อย! ✓</span>
+            </div>
+          </div>
+
         </div>
 
         <div class="card">
@@ -362,7 +370,6 @@
             <button class="btn" id="analyzeFoodBtn">+ บันทึกรายการนี้</button>
             <span class="save-status" id="foodAnalyzeStatus">บันทึกแล้ว</span>
           </div>
-          <p class="section-desc" style="margin:10px 0 0;">เวอร์ชันนี้กรอกค่าสารอาหารเอง (ดูตัวเลขคร่าวๆ จากฉลากหรือแอปนับแคลอรี่) เพราะฟีเจอร์วิเคราะห์ด้วย AI ใช้ได้เฉพาะตอนเปิดผ่าน Claude เท่านั้น</p>
         </div>
 
         <div class="card">
@@ -426,7 +433,7 @@
 
   </div>
 
-  <p class="footer-note">ข้อมูลทั้งหมดบันทึกไว้ในเบราว์เซอร์ของคุณเท่านั้น เห็นเฉพาะคุณคนเดียว การวิเคราะห์อาหารเป็นการประมาณการโดย AI ไม่ใช่ค่าทางโภชนาการที่แม่นยำ 100% — เคยมีประวัติไทรอยด์มาก่อน หากระหว่างซ้อมมีอาการใจสั่น เหนื่อยผิดปกติ หรืออ่อนเพลียมาก ให้พักและปรึกษาแพทย์ &nbsp;·&nbsp; <span id="resetLink" style="text-decoration:underline;cursor:pointer;">ล้างข้อมูลทั้งหมด</span></p>
+  <p class="footer-note">ข้อมูลทั้งหมดบันทึกไว้ใน Google Sheets ของคุณ &nbsp;·&nbsp; <span id="resetLink" style="text-decoration:underline;cursor:pointer;">ล้างข้อมูลทั้งหมด</span></p>
 
 </div>
 
@@ -437,14 +444,11 @@
 
 <script>
 // ==========================================================================
-// ตั้งค่าตรงนี้: https://script.google.com/macros/s/AKfycbz83o_76EW56Mq73iSKLqdqvfMxy8SO6-sCOraZJJLis_ADdVxqT9rNngjmGJsOcU5K6Q/exec
-// ตัวอย่าง: "https://script.google.com/macros/s/AKfycb.../exec"
-// ดูวิธีสร้างในคู่มือ "คู่มือส่งออกเว็บแอป.md" ที่แนบมาด้วย
+// ใส่ URL Apps Script ของคุณที่นี่
 // ==========================================================================
-const SHEET_API_URL = "https://script.google.com/macros/s/AKfycby38GvQhyaa51zz7pMdJVWVpHPhsefjPaIH71D5p62PaH9NwcAiJhFuVjj1JuAd24BpQQ/exec";
+const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbwCdZYAG_av4EYZ5nIVqGaRLkf4bACyeZDIydnQww41Mcvk0p2H51M-y0u5t5xrN70cxw/exec";
 // ==========================================================================
 
-// ---------- Icons (simple original line-art pictograms) ----------
 const ICONS = {
   pull: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="4" y1="3" x2="20" y2="3"/><line x1="10" y1="7" x2="7" y2="3"/><line x1="14" y1="7" x2="17" y2="3"/><circle cx="12" cy="7" r="2"/><line x1="12" y1="9" x2="12" y2="15"/><line x1="12" y1="15" x2="9" y2="19"/><line x1="12" y1="15" x2="15" y2="19"/></svg>`,
   push: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="4.5" cy="11" r="2"/><line x1="6.5" y1="11" x2="19" y2="8"/><line x1="9" y1="11" x2="9" y2="17"/><line x1="19" y1="8" x2="21" y2="13"/></svg>`,
@@ -533,11 +537,6 @@ const QUOTES = [
   'ทุกหยดเหงื่อวันนี้ คือดอกเบี้ยของกล้ามเนื้อที่จะโตวันหน้า',
 ];
 let quoteIndex = 0;
-function dayOfYear(){
-  const now = new Date();
-  const start = new Date(now.getFullYear(),0,0);
-  return Math.floor((now - start) / 86400000);
-}
 function renderQuote(){
   document.getElementById('quoteText').textContent = QUOTES[quoteIndex % QUOTES.length];
 }
@@ -589,7 +588,6 @@ function addDays(dateStr, n){
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
-// ---------- Storage via Google Sheets (Apps Script Web App) with retry + failure banner ----------
 let pendingSaves = {};
 function showSaveBanner(){ document.getElementById('saveBanner').classList.add('show'); }
 function hideSaveBanner(){ document.getElementById('saveBanner').classList.remove('show'); }
@@ -604,7 +602,6 @@ async function sheetGet(key){
 
 async function sheetSet(key, valueObj){
   const json = JSON.stringify(valueObj);
-  // text/plain avoids a CORS "preflight" request that Apps Script doesn't handle well
   const res = await fetch(SHEET_API_URL, {
     method: 'POST',
     headers: {'Content-Type': 'text/plain;charset=utf-8'},
@@ -635,20 +632,15 @@ async function retryAllPendingSaves(){
   for(const key of keys){
     await storageSetWithRetry(key, pendingSaves[key]);
   }
-  if(keys.length === 0){
-    await saveDailyLog(); await savePerfLog(); await saveFoodLog(); await saveSettings();
-  }
 }
 
 async function loadData(){
-  if(!SHEET_API_URL || SHEET_API_URL.indexOf('http') !== 0){
-    alert('ยังไม่ได้ตั้งค่า SHEET_API_URL ในไฟล์นี้ — ดูวิธีตั้งค่าในคู่มือที่แนบมา');
-  }
   try{ dailyLog = (await sheetGet('daily-log')) || {}; }catch(e){ dailyLog = {}; showSaveBanner(); }
   try{ perfLog = (await sheetGet('perf-log')) || {}; }catch(e){ perfLog = {}; showSaveBanner(); }
   try{ foodLog = (await sheetGet('food-log')) || {}; }catch(e){ foodLog = {}; showSaveBanner(); }
   try{ settings = (await sheetGet('settings')) || {startDate:null}; }catch(e){ settings = {startDate:null}; showSaveBanner(); }
 }
+
 async function saveDailyLog(){ return storageSetWithRetry('daily-log', dailyLog); }
 async function savePerfLog(){ return storageSetWithRetry('perf-log', perfLog); }
 async function saveFoodLog(){ return storageSetWithRetry('food-log', foodLog); }
@@ -656,14 +648,12 @@ async function saveSettings(){ return storageSetWithRetry('settings', settings);
 
 function flashStatus(el){ el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove('show'), 1400); }
 
-// ---------- Tabs ----------
 function switchTab(tabName){
   document.querySelectorAll('.tab-btn').forEach(b=> b.classList.toggle('active', b.dataset.tab === tabName));
   document.querySelectorAll('.tab-panel').forEach(p=> p.classList.toggle('active', p.dataset.panel === tabName));
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
-// ---------- Daily checklist ----------
 function renderChecklistDay(dateStr){
   const weekday = new Date(dateStr + 'T00:00:00').getDay();
   const tpl = TEMPLATES[weekday];
@@ -688,7 +678,6 @@ function renderChecklistDay(dateStr){
     const cb = document.createElement('input');
     cb.type = 'checkbox';
     cb.checked = !!(entry.checks && entry.checks[item.id]);
-    cb.addEventListener('change', ()=> onDailyFieldChange(dateStr));
 
     const label = document.createElement('span');
     label.className = 'check-label';
@@ -697,8 +686,9 @@ function renderChecklistDay(dateStr){
     row.appendChild(iconWrap);
     row.appendChild(cb);
     row.appendChild(label);
+    
     row.addEventListener('click', (e)=>{
-      if(e.target !== cb){ cb.checked = !cb.checked; onDailyFieldChange(dateStr); }
+      if(e.target !== cb){ cb.checked = !cb.checked; }
     });
     container.appendChild(row);
   });
@@ -720,16 +710,31 @@ function collectDailyEntry(dateStr){
   };
 }
 
-let dailySaveTimer = null;
-function onDailyFieldChange(dateStr){
-  clearTimeout(dailySaveTimer);
-  dailySaveTimer = setTimeout(async ()=>{
-    dailyLog[dateStr] = collectDailyEntry(dateStr);
-    await saveDailyLog();
-    flashStatus(document.getElementById('dailySaveStatus'));
-    renderDailyHistory();
-    renderOverview();
-  }, 400);
+// ฟังก์ชันบันทึกและดึงข้อมูลใหม่มาแสดงผลทันที
+async function saveChecklistNow() {
+  const dateStr = document.getElementById('checklistDate').value;
+  const btn = document.getElementById('saveChecklistBtn');
+  
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '⏳ กำลังบันทึก...';
+  btn.disabled = true;
+
+  // 1. จัดเก็บข้อมูลลงตัวแปรและส่งขึ้น Sheets
+  dailyLog[dateStr] = collectDailyEntry(dateStr);
+  await saveDailyLog();
+  
+  // 2. ดึงข้อมูลล่าสุดจาก Sheets มาอัปเดตหน้าจอทันที เพื่อความชัวร์
+  try {
+    dailyLog = (await sheetGet('daily-log')) || dailyLog;
+  } catch(e) {}
+
+  // 3. อัปเดตหน้าจอทั้งหมด (ประวัติ หน้าแรก กราฟวงกลม)
+  flashStatus(document.getElementById('dailySaveStatus'));
+  renderDailyHistory();
+  renderOverview();
+
+  btn.innerHTML = originalText;
+  btn.disabled = false;
 }
 
 function completionPct(dateStr){
@@ -762,7 +767,6 @@ function renderDailyHistory(){
   buildHistoryList(document.getElementById('dailyHistoryOverview'));
 }
 
-// ---------- Food / nutrition (manual entry — AI analysis requires Claude's environment) ----------
 async function addManualFood(){
   const name = document.getElementById('foodInput').value.trim();
   const calories = Number(document.getElementById('foodCalories').value) || 0;
@@ -775,6 +779,7 @@ async function addManualFood(){
   if(!foodLog[dateStr]) foodLog[dateStr] = [];
   foodLog[dateStr].push({name, calories, protein_g:protein, carbs_g:carbs, fat_g:fat});
   await saveFoodLog();
+  try { foodLog = (await sheetGet('food-log')) || foodLog; } catch(e) {}
   renderFoodLog(dateStr);
 
   document.getElementById('foodInput').value = '';
@@ -796,7 +801,7 @@ function renderFoodLog(dateStr){
   }, {calories:0, protein:0, carbs:0, fat:0});
 
   const totalsBox = document.getElementById('foodTotals');
-  const proteinClass = totals.protein >= 130 ? 'ok' : (totals.protein > 0 ? '' : '');
+  const proteinClass = totals.protein >= 130 ? 'ok' : '';
   const calClass = totals.calories > 2500 ? 'over' : '';
   totalsBox.innerHTML = `
     <div class="food-pill ${calClass}"><div class="fp-label">แคลอรี่</div><div class="fp-value">${Math.round(totals.calories)}</div></div>
@@ -824,7 +829,6 @@ function renderFoodLog(dateStr){
   });
 }
 
-// ---------- Performance tests ----------
 function setPerfPhotoPreview(dataUrl){
   const preview = document.getElementById('perfPhotoPreview');
   const removeBtn = document.getElementById('perfPhotoRemoveBtn');
@@ -842,6 +846,7 @@ function clearPerfForm(){
   document.getElementById('perfPhotoInput').value = '';
   setPerfPhotoPreview(null);
 }
+
 async function onSavePerf(){
   const dateStr = document.getElementById('perfDate').value || todayStr();
   perfLog[dateStr] = {
@@ -852,9 +857,12 @@ async function onSavePerf(){
     photo: currentPerfPhoto || null,
   };
   await savePerfLog();
+  try { perfLog = (await sheetGet('perf-log')) || perfLog; } catch(e) {}
+  
   flashStatus(document.getElementById('perfSaveStatus'));
   renderPerfHistory(); updateMilestoneStatus(); renderOverview();
 }
+
 function renderPerfHistory(){
   const container = document.getElementById('perfHistory');
   const dates = Object.keys(perfLog).sort().reverse();
@@ -904,7 +912,6 @@ function renderPerfHistory(){
   });
 }
 
-// ---------- Milestone / month calc ----------
 function currentMonthIndex(){
   if(!settings.startDate) return 1;
   const start = new Date(settings.startDate + 'T00:00:00');
@@ -991,7 +998,6 @@ function updateMilestoneStatus(){
   });
 }
 
-// ---------- Streak ----------
 function computeStreak(){
   let streak = 0, cursor = todayStr();
   while(true){
@@ -1003,7 +1009,6 @@ function computeStreak(){
   return streak;
 }
 
-// ---------- Overview ----------
 function renderOverview(){
   const today = todayStr();
   const todayEntry = dailyLog[today] || {checks:{}, jumprope:0, pushupExtra:0};
@@ -1043,7 +1048,6 @@ function renderOverview(){
     grid.appendChild(div);
   });
 
-  // Progress ring
   const circumference = 326.7;
   const ringFg = document.getElementById('ringFg');
   if(ringFg) ringFg.style.strokeDashoffset = circumference * (1 - todayPct/100);
@@ -1060,7 +1064,6 @@ function renderOverview(){
   renderPhotoGallery();
 }
 
-// ---------- Init ----------
 async function init(){
   await loadData();
   const today = todayStr();
@@ -1108,9 +1111,8 @@ async function init(){
   document.querySelectorAll('[data-jump]').forEach(btn=> btn.addEventListener('click', ()=> switchTab(btn.dataset.jump)));
 
   document.getElementById('checklistDate').addEventListener('change', (e)=> renderChecklistDay(e.target.value));
-  document.getElementById('jumpropeInput').addEventListener('input', ()=> onDailyFieldChange(document.getElementById('checklistDate').value));
-  document.getElementById('pushupExtraInput').addEventListener('input', ()=> onDailyFieldChange(document.getElementById('checklistDate').value));
-  document.getElementById('dailyNote').addEventListener('input', ()=> onDailyFieldChange(document.getElementById('checklistDate').value));
+  
+  document.getElementById('saveChecklistBtn').addEventListener('click', saveChecklistNow);
 
   document.getElementById('foodDate').addEventListener('change', (e)=> renderFoodLog(e.target.value));
   document.getElementById('analyzeFoodBtn').addEventListener('click', addManualFood);
